@@ -1,0 +1,9 @@
+Import('*')
+
+SimObject('NDPDevA.py', sim_objects=['NDPDevA'])
+
+Source('ndp_dev_a.cc')
+
+DebugFlag('NDPDevA', "For debugging the NDP device A")
+DebugFlag('NDPDevAPI', "For debugging the PI of the NDP device A")
+DebugFlag('NDPDevAMem', "For debugging the Mem interface of the NDP device A")

@@ -1,0 +1,8 @@
+Import('*')
+
+SimObject('NDP.py', sim_objects=['NDP'])
+
+Source('ndp.cc')
+
+DebugFlag('NDPPI', "For debugging the PI of the NDP device wrapper")
+DebugFlag('NDPMem', "For debugging the Mem interface of the NDP device wrapper")
