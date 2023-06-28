@@ -22,7 +22,7 @@
 #define WRI_SIZE 0x28
 #define REA_SIZE 0x10
 
-#define START_CODE 80
+#define START_CODE 50
 
 #define DATA_SIZE 0x10000
 #define MAX_KEY (DATA_SIZE / 4)

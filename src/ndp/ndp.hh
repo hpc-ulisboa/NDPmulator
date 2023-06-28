@@ -111,6 +111,9 @@ namespace gem5
 
 			bool isWrite()
 			{ return writeRequest; };
+
+			int countPendingSubRequests()
+			{ return pendingSubRequests.size(); }
 		};
 
 		AddrRangeList getAddrRanges() const;
@@ -123,8 +126,9 @@ namespace gem5
 
 		CPUSidePort cpuPort;
 		MemSidePort memPort, dmaPort;
-		AddrRange ndpRnge;
-		uint64_t maxRSze;
+		AddrRange ndpCtrl, ndpData;
+		bool dmaActv;
+		uint64_t maxRSze, maxReqs, flyReqs;
 		std::list<BurstRequest *> pendingRequests;
 		std::list<PacketPtr> pendingReqPackets, pendingRespPackets;
 

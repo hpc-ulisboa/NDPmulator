@@ -8,10 +8,13 @@ namespace gem5
 	cpuPort(params.name + ".cpu_side", this),
 	memPort(params.name + ".mem_side", this),
 	dmaPort(params.name + ".dma_port", this),
-	ndpRnge(params.ndp_rnge),
-	maxRSze(params.max_rsze)
+	ndpCtrl(params.ndp_ctrl),
+	ndpData(params.ndp_data),
+	maxRSze(params.max_rsze),
+	maxReqs(params.max_reqs)
 	{
-
+		flyReqs = 0;
+		dmaActv = false;
 	}
 
 	Port &
@@ -42,8 +45,10 @@ namespace gem5
 	bool
 	NDP::CPUSidePort::recvTimingReq(PacketPtr pkt)
 	{
-		if (owner->ndpRnge.contains(pkt->getAddr()))
+		if (owner->ndpCtrl.contains(pkt->getAddr()))
 			return owner->handleRequest(pkt);
+		else if (owner->ndpData.contains(pkt->getAddr()))
+			return owner->memPort.sendTimingReq(pkt);
 		else
 			return owner->memPort.sendTimingReq(pkt);
 	}
@@ -57,7 +62,7 @@ namespace gem5
 	bool
 	NDP::handleRequest(PacketPtr pkt)
 	{
-		uint64_t data, ridx = (pkt->getAddr() - ndpRnge.start()) / sizeof(uint64_t);
+		uint64_t data, ridx = (pkt->getAddr() - ndpCtrl.start()) / sizeof(uint64_t);
 
 		if (pkt->isRead())
 		{
@@ -101,6 +106,13 @@ namespace gem5
 	void
 	NDP::sendData()
 	{
+		// If maximum number of simultaneous requests was reached do nothing
+		if (flyReqs == maxReqs)
+		{
+			dmaActv = false;
+			return;
+		}
+
 		PacketPtr pkt = pendingReqPackets.front();
 
 		DPRINTF(
@@ -115,6 +127,8 @@ namespace gem5
 		// Send oldest pending packet
 		if (dmaPort.sendTimingReq(pkt))
 		{
+			flyReqs++;
+
 			// Remove pending packet from list
 			pendingReqPackets.pop_front();
 
@@ -123,16 +137,20 @@ namespace gem5
 			{
 				schedule(
 					new EventFunctionWrapper(
-						[this, pkt]
+						[this]
 						{
 							sendData();
 						},
-						name() + ".NDPDevASendMemoryRequest",
+						name() + ".NDPAttemptMemoryRequest",
 						true
 					),
 					// Send the next packet on the next cycle
 					clockEdge(Cycles(1))
 				);
+			}
+			else
+			{
+				dmaActv = false;
 			}
 		}
 	}
@@ -162,7 +180,12 @@ namespace gem5
 			newRequest->addSubRequest(AddrRange(saddr, saddr + ssize), sdata);
 
 			PacketPtr pkt = new Packet(
-				std::make_shared<Request> (saddr, ssize, 0, 0),	// Create request
+				std::make_shared<Request> (						// Create request
+					saddr,
+					ssize,
+					0,
+					0
+				),
 				write ? MemCmd::WriteReq : MemCmd::ReadReq,		// Read or write
 				ssize
 			);
@@ -186,18 +209,12 @@ namespace gem5
 
 		pendingRequests.push_back(newRequest);
 
-		schedule(
-			new EventFunctionWrapper(
-				[this]
-				{
-					sendData();
-				},
-				name() + ".NDPDevASendMemoryRequest",
-				true
-			),
-			// Send the next packet on the next cycle
-			clockEdge(Cycles(1))
-		);
+		// Trigger DMA if it is asleep
+		if (!dmaActv)
+		{
+			dmaActv = true;
+			sendData();
+		}
 	}
 
 	bool
@@ -243,7 +260,7 @@ namespace gem5
 
 						recvData(
 							(*it)->getAddr(),
-							(*it)->getDataPtr(),
+							(*it)->isWrite() ? NULL : (*it)->getDataPtr(),
 							(*it)->getSize()
 						);
 
@@ -255,8 +272,18 @@ namespace gem5
 			}
 		}
 
-		// Finally delete the packet
+		// Decrease the number of on-fly requests
+		flyReqs--;
+
+		// Delete the packet
 		delete pkt;
+
+		// Trigger DMA if it is asleep and there are still pending packets
+		if (!dmaActv && !pendingReqPackets.empty())
+		{
+			dmaActv = true;
+			sendData();
+		}
 
 		return true;
 	}
@@ -286,7 +313,9 @@ namespace gem5
 		if (name().find("mem_side") != std::string::npos)
 			owner->cpuPort.sendRetryReq();
 		else
+		{
 			owner->sendData();
+		}
 	}
 
 	void
