@@ -3,27 +3,29 @@ from m5.objects import *
 from caches import *
 
 # Program to execute
-binary = 'tests/test-progs/ndp/ndp_dev_a/bench_se'
+binary = "tests/test-progs/ndp/ndp_dev_a/bench_se"
 
 # Simulation system
 system = System()
 
 # Clock configuration
 system.clk_domain = SrcClockDomain()
-system.clk_domain.clock = '2GHz'
+system.clk_domain.clock = "2GHz"
 system.clk_domain.voltage_domain = VoltageDomain()
 
 # Memory configuration
-system.mem_mode = 'timing'
-system.mem_ranges = [AddrRange('2GB')]
+system.mem_mode = "timing"
+system.mem_ranges = [AddrRange("2GB")]
 
 # Create CPU
 system.cpu = TimingSimpleCPU()
 
 # Create NDP device
 system.ndp_accel = NDPDevA(
-    ndp_rnge=('0x40000000', '0x40001000'),
-    max_rsze=0x40
+    ndp_ctrl=("0x40000000", "0x40001000"),
+    ndp_data=("0x40001000", "0x80000000"),
+    max_rsze=0x40,
+    max_reqs=64,
 )
 
 # Create L1 caches
@@ -64,7 +66,7 @@ system.ndp_accel.dma_port = system.l2bus.cpu_side_ports
 system.cpu.createInterruptController()
 
 # Connect interruptions and IO with memory bus (required by X86)
-if m5.defines.buildEnv['USE_X86_ISA']:
+if m5.defines.buildEnv["USE_X86_ISA"]:
     system.cpu.interrupts[0].pio = system.membus.mem_side_ports
     system.cpu.interrupts[0].int_master = system.membus.cpu_side_ports
     system.cpu.interrupts[0].int_slave = system.membus.mem_side_ports
@@ -91,7 +93,7 @@ system.cpu.workload = process
 system.cpu.createThreads()
 
 # Set up the root SimObject and start the simulation
-root = Root(full_system = False, system = system)
+root = Root(full_system=False, system=system)
 
 # Instantiate all of the objects we've created above
 m5.instantiate()
@@ -102,4 +104,6 @@ system.cpu.workload[0].map(0x40000000, 0x40000000, 0x40000000, cacheable=True)
 print("========== Beginning simulation ==========")
 exit_event = m5.simulate()
 
-print('Exiting @ tick {} because {}' .format(m5.curTick(), exit_event.getCause()))
+print(
+    "Exiting @ tick {} because {}".format(m5.curTick(), exit_event.getCause())
+)

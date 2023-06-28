@@ -37,7 +37,8 @@ processor = SimpleProcessor(
 )
 
 ndp_device = NDPDevA(
-    ndp_rnge=('0x40000000', '0x40001000'),
+    ndp_ctrl=('0x40000000', '0x40001000'),
+    ndp_data=('0x40001000', '0x80000000'),
     max_rsze=0x40
 )
 

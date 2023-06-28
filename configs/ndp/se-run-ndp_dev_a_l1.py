@@ -22,7 +22,8 @@ system.cpu = TimingSimpleCPU()
 
 # Create NDP device
 system.ndp_accel = NDPDevA(
-    ndp_rnge=('0x40000000', '0x40001000'),
+    ndp_ctrl=('0x40000000', '0x40001000'),
+    ndp_data=('0x40001000', '0x80000000'),
     max_rsze=0x40
 )
 
@@ -101,7 +102,7 @@ root = Root(full_system = False, system = system)
 m5.instantiate()
 
 # Dedicate upper 1GB to NDP device
-system.cpu.workload[0].map(0x40000000, 0x40000000, 0x40000000, cacheable=True)
+system.cpu.workload[0].map(0x40000000, 0x40000000, 0x40000000)
 
 print("========== Beginning simulation ==========")
 exit_event = m5.simulate()
