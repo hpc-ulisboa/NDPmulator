@@ -98,7 +98,7 @@ root = Root(full_system = False, system = system)
 m5.instantiate()
 
 # Dedicate upper 1GB to NDP device
-system.cpu.workload[0].map(0x40000000, 0x40000000, 0x40000000)
+system.cpu.workload[0].map(0x40000000, 0x40000000, 0x40000000, cacheable=False)
 
 print("========== Beginning simulation ==========")
 exit_event = m5.simulate()
