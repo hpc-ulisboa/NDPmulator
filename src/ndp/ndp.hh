@@ -1,6 +1,8 @@
 #ifndef __NDP_HH__
 #define __NDP_HH__
 
+#include "mem/packet_access.hh"
+
 #include "sim/system.hh"
 #include "sim/clocked_object.hh"
 #include "mem/port.hh"
