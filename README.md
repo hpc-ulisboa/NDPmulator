@@ -34,15 +34,17 @@ The authors rely on the images and kernels officially supported by gem5, availab
 ## How to cite
 
 ```
-@inproceedings{DBLP:conf/sbac-pad/VieiraR0T22,
+@article{DBLP:journals/cal/VieiraRFT24,
   author       = {Jo{\~{a}}o Vieira and
                   Nuno Roma and
                   Gabriel Falc{\~{a}}o and
                   Pedro Tom{\'{a}}s},
-  title        = {gem5-ndp: Near-Data Processing Architecture Simulation From Low Level Caches to {DRAM}},
-  booktitle    = {{SBAC-PAD}},
-  pages        = {41--50},
-  publisher    = {{IEEE}},
-  year         = {2022}
+  title        = {gem5-accel: {A} Pre-RTL Simulation Toolchain for Accelerator Architecture
+                  Validation},
+  journal      = {{IEEE} Comput. Archit. Lett.},
+  volume       = {23},
+  number       = {1},
+  pages        = {1--4},
+  year         = {2024}
 }
 ```
